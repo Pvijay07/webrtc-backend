@@ -122,6 +122,11 @@ async function startStream(camera_id, rtsp_url) {
           mimeType: 'video/H264',
           clockRate: 90000,
           payloadType: 96,
+          parameters: {
+            'packetization-mode': 1,
+            'profile-level-id': '42e01f',
+            'level-asymmetry-allowed': 1
+          }
         }
       ],
       encodings: [{ ssrc: 111111 }] // Arbitrary SSRC
