@@ -17,6 +17,11 @@ const io = new Server(server, {
   }
 });
 
+// Simple route to check if server is running
+app.get('/', (req, res) => {
+  res.send('<h1>WebRTC Backend is Running</h1><p>Connect using a Mediasoup/Socket.io client to view the RTSP stream.</p>');
+});
+
 // Mediasoup Config
 const mediaCodecs = [
   {
