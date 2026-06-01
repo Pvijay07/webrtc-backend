@@ -17,10 +17,8 @@ const io = new Server(server, {
   }
 });
 
-// Simple route to check if server is running
-app.get('/', (req, res) => {
-  res.send('<h1>WebRTC Backend is Running</h1><p>Connect using a Mediasoup/Socket.io client to view the RTSP stream.</p>');
-});
+// Serve static files from the public directory
+app.use(express.static('public'));
 
 // Mediasoup Config
 const mediaCodecs = [
@@ -145,8 +143,9 @@ io.on('connection', async (socket) => {
 
   let payload = {
     camera_id: '2',
-    rtsp_url: 'rtsp://admin:Infccpw1@tsvsc-183-82-119-59.run.pinggy-free.link:34363/cam/realmonitor?channel=2&subtype=0'
+    rtsp_url: 'rtsp://admin:Infccpw1@tsvsc-183-82-119-59.run.pinggy-free.link:38711/cam/realmonitor?channel=2&subtype=0'
   };
+  // tcp://jmfhi-183-82-119-59.run.pinggy-free.link:38711
   console.log(`Client authenticated for static camera ${payload.camera_id}`);
 
   let consumer;
