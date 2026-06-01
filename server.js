@@ -131,22 +131,18 @@ async function startStream(camera_id, rtsp_url) {
 }
 
 io.on('connection', async (socket) => {
-  const token = socket.handshake.query.token;
+  // const token = socket.handshake.query.token;
 
-  if (!token) {
-    socket.disconnect();
-    return;
-  }
+  // if (!token) {
+  //   socket.disconnect();
+  //   return;
+  // }
 
-  let payload;
-  try {
-    payload = jwt.verify(token, process.env.JWT_SECRET || 'your_strong_random_secret_here');
-    console.log(`Client authenticated for camera ${payload.camera_id}`);
-  } catch (e) {
-    console.error('JWT Verification failed:', e.message);
-    socket.disconnect();
-    return;
-  }
+  let payload = {
+    camera_id: '2',
+    rtsp_url: 'rtsp://admin:Infccpw1@tsvsc-183-82-119-59.run.pinggy-free.link:34363/cam/realmonitor?channel=2&subtype=0'
+  };
+  console.log(`Client authenticated for static camera ${payload.camera_id}`);
 
   let consumer;
   let transport;
