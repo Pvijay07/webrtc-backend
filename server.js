@@ -104,7 +104,7 @@ async function startStream(camera_id, rtsp_url) {
 
   ffmpegProcess.stderr.on('data', (data) => {
     // FFmpeg logs to stderr
-    // console.log(`[FFmpeg ${camera_id}]: ${data.toString()}`);
+    console.log(`[FFmpeg ${camera_id}]: ${data.toString()}`);
   });
 
   ffmpegProcess.on('close', (code) => {
@@ -171,7 +171,12 @@ io.on('connection', async (socket) => {
         preferUdp: true,
       });
 
+      transport.on('icestatechange', iceState => {
+        console.log('ICE state change:', iceState);
+      });
+
       transport.on('dtlsstatechange', dtlsState => {
+        console.log('DTLS state change:', dtlsState);
         if (dtlsState === 'closed') transport.close();
       });
 
