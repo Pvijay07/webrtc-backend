@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const { spawn } = require('child_process');
 const dgram = require('dgram');
 const os = require('os');
+const https = require('https');
 require('dotenv').config();
 
 const app = express();
@@ -36,6 +37,7 @@ const mediaCodecs = [
 
 let worker;
 let router;
+let webRtcServer;
 
 // Helper to get local IP if PUBLIC_IP isn't set (useful for local testing)
 function getLocalIp() {
@@ -49,7 +51,28 @@ function getLocalIp() {
 
 const PUBLIC_IP = process.env.PUBLIC_IP || getLocalIp();
 
+async function getExternalIp() {
+  return new Promise((resolve) => {
+    https.get('https://api.ipify.org', (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => resolve(data));
+    }).on('error', () => resolve(PUBLIC_IP));
+  });
+}
+
+let announcedIp = PUBLIC_IP;
+
 async function createWorker() {
+  if (!process.env.PUBLIC_IP) {
+    try {
+      announcedIp = await getExternalIp();
+      console.log('Using announced IP for WebRTC:', announcedIp);
+    } catch (e) {
+      console.error('Failed to get external IP:', e);
+    }
+  }
+
   worker = await mediasoup.createWorker({
     logLevel: 'warn',
     logTags: ['info', 'ice', 'dtls', 'rtp', 'srtp', 'rtcp'],
@@ -61,6 +84,25 @@ async function createWorker() {
     console.error('mediasoup worker died, exiting in 2 seconds... [pid:%d]', worker.pid);
     setTimeout(() => process.exit(1), 2000);
   });
+
+  if (process.env.RAILWAY_TCP_PROXY_DOMAIN && process.env.RAILWAY_TCP_PROXY_PORT) {
+    const tcpPort = parseInt(process.env.WEBRTC_TCP_PORT || '4444', 10);
+    try {
+      webRtcServer = await worker.createWebRtcServer({
+        listenInfos: [
+          {
+            protocol: 'tcp',
+            ip: '0.0.0.0',
+            announcedAddress: process.env.RAILWAY_TCP_PROXY_DOMAIN,
+            port: tcpPort
+          }
+        ]
+      });
+      console.log(`WebRtcServer started on TCP ${tcpPort}, external: ${process.env.RAILWAY_TCP_PROXY_DOMAIN}:${process.env.RAILWAY_TCP_PROXY_PORT}`);
+    } catch (e) {
+      console.error('Failed to create WebRtcServer', e);
+    }
+  }
 
   router = await worker.createRouter({ mediaCodecs });
   console.log('Mediasoup router created');
@@ -96,8 +138,8 @@ async function startStream(camera_id, rtsp_url) {
     '-rtsp_transport', 'tcp',
     '-i', rtsp_url,
     '-vcodec', 'copy',
-    '-f', 'rtp',
-    `rtp://127.0.0.1:${rtpPort}`
+    '-f', 'tee',
+    `[select=v:f=rtp:ssrc=111111:payload_type=96]rtp://127.0.0.1:${rtpPort}`
   ];
 
   const ffmpegProcess = spawn('ffmpeg', ffmpegArgs);
@@ -164,12 +206,21 @@ io.on('connection', async (socket) => {
   // Client requests to create a WebRTC transport
   socket.on('createTransport', async (cb) => {
     try {
-      transport = await router.createWebRtcTransport({
-        listenIps: [{ ip: '0.0.0.0', announcedIp: PUBLIC_IP }],
-        enableUdp: true,
-        enableTcp: true,
-        preferUdp: true,
-      });
+      if (webRtcServer) {
+        transport = await router.createWebRtcTransport({
+          webRtcServer: webRtcServer,
+          enableUdp: false,
+          enableTcp: true,
+          preferUdp: false,
+        });
+      } else {
+        transport = await router.createWebRtcTransport({
+          listenIps: [{ ip: '0.0.0.0', announcedIp: announcedIp }],
+          enableUdp: true,
+          enableTcp: true,
+          preferUdp: true,
+        });
+      }
 
       transport.on('icestatechange', iceState => {
         console.log('ICE state change:', iceState);
@@ -182,10 +233,20 @@ io.on('connection', async (socket) => {
 
       transport.on('routerclose', () => transport.close());
 
+      let iceCandidates = transport.iceCandidates;
+      
+      if (webRtcServer && process.env.RAILWAY_TCP_PROXY_PORT) {
+        const externalPort = parseInt(process.env.RAILWAY_TCP_PROXY_PORT, 10);
+        iceCandidates = iceCandidates.map(c => ({
+          ...c,
+          port: externalPort
+        }));
+      }
+
       cb({
         id: transport.id,
         iceParameters: transport.iceParameters,
-        iceCandidates: transport.iceCandidates,
+        iceCandidates: iceCandidates,
         dtlsParameters: transport.dtlsParameters,
       });
     } catch (err) {
