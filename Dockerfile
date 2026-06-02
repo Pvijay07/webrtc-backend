@@ -12,8 +12,5 @@ RUN npm install
 # Copy application files
 COPY . .
 
-# Expose port 3000 for Railway HTTP routing
-EXPOSE 3000
-
 # Start the server
 CMD ["node", "server.js"]

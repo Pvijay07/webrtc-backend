@@ -105,7 +105,7 @@ async function createWorker() {
     process.env.RAILWAY_TCP_PROXY_DOMAIN &&
     process.env.RAILWAY_TCP_PROXY_PORT
   ) {
-    let tcpPort = parseInt(process.env.WEBRTC_TCP_PORT || "40000", 10);
+    let tcpPort = parseInt(process.env.WEBRTC_TCP_PORT || "40001", 10);
     try {
       webRtcServer = await worker.createWebRtcServer({
         listenInfos: [
@@ -129,8 +129,8 @@ async function createWorker() {
   console.log("Mediasoup router created");
 }
 
-// We force the HTTP server to port 3000 so Railway routes web traffic here
-const PORT = process.env.HTTP_PORT || 3000;
+// Start HTTP server first so Railway sees the port immediately
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`WebRTC backend listening on port ${PORT}`);
   // Initialize mediasoup AFTER the HTTP server is up
