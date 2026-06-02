@@ -22,9 +22,27 @@ const io = new Server(server, {
 // Serve static files from the public directory
 app.use(express.static("public"));
 
+const logBuffer = [];
+const originalLog = console.log;
+const originalError = console.error;
+console.log = function(...args) {
+  logBuffer.push(`[LOG] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`);
+  if (logBuffer.length > 200) logBuffer.shift();
+  originalLog.apply(console, args);
+};
+console.error = function(...args) {
+  logBuffer.push(`[ERROR] ${args.map(a => typeof a === 'object' ? JSON.stringify(a) : a).join(' ')}`);
+  if (logBuffer.length > 200) logBuffer.shift();
+  originalError.apply(console, args);
+};
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
+});
+
+app.get('/debug-logs', (req, res) => {
+  res.status(200).send(logBuffer.join('\n'));
 });
 
 // Mediasoup Config
