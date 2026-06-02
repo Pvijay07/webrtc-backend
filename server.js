@@ -24,7 +24,7 @@ app.use(express.static("public"));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', port: process.env.PORT || 3000 });
+  res.status(200).json({ status: 'ok' });
 });
 
 // Mediasoup Config
@@ -129,10 +129,13 @@ async function createWorker() {
   console.log("Mediasoup router created");
 }
 
-// Start HTTP server first so Railway sees the port immediately
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`WebRTC backend listening on port ${PORT}`);
+// Start HTTP server - ensure it never collides with the WebRTC TCP proxy port
+const WEBRTC_TCP_PORT = parseInt(process.env.WEBRTC_TCP_PORT || "40000", 10);
+const rawPort = parseInt(process.env.PORT || "3000", 10);
+const HTTP_PORT = (rawPort === WEBRTC_TCP_PORT) ? 3000 : rawPort;
+console.log(`PORT env=${process.env.PORT}, resolved HTTP_PORT=${HTTP_PORT}, WEBRTC_TCP_PORT=${WEBRTC_TCP_PORT}`);
+server.listen(HTTP_PORT, '0.0.0.0', () => {
+  console.log(`WebRTC backend listening on HTTP port ${HTTP_PORT}`);
   // Initialize mediasoup AFTER the HTTP server is up
   createWorker().catch(err => {
     console.error('Failed to create mediasoup worker:', err);
