@@ -1,3 +1,4 @@
+console.log('=== server.js starting ===');
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -20,6 +21,11 @@ const io = new Server(server, {
 
 // Serve static files from the public directory
 app.use(express.static("public"));
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', port: process.env.PORT || 3000 });
+});
 
 // Mediasoup Config
 const mediaCodecs = [
@@ -123,7 +129,15 @@ async function createWorker() {
   console.log("Mediasoup router created");
 }
 
-createWorker();
+// Start HTTP server first so Railway sees the port immediately
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`WebRTC backend listening on port ${PORT}`);
+  // Initialize mediasoup AFTER the HTTP server is up
+  createWorker().catch(err => {
+    console.error('Failed to create mediasoup worker:', err);
+  });
+});
 
 // We map camera_id to a specific ffmpeg process and mediasoup producer
 // So if multiple users watch the same camera, we only ingest it once.
@@ -348,7 +362,3 @@ io.on("connection", async (socket) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`WebRTC backend listening on port ${PORT}`);
-});

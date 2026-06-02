@@ -15,9 +15,7 @@ COPY . .
 # Environment variables
 ENV PORT=3000
 
-# Expose HTTP port and WebRTC UDP ports (10000-10100 for testing, change if needed)
-EXPOSE 10000-10100/udp
-EXPOSE 4444/tcp
+# Railway routes HTTP to this port
 EXPOSE 3000
 
 # Start the server
