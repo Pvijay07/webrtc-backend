@@ -55,13 +55,16 @@ const PUBLIC_IP = process.env.PUBLIC_IP || getLocalIp();
 
 async function getExternalIp() {
   return new Promise((resolve) => {
-    https
-      .get("https://api.ipify.org", (res) => {
-        let data = "";
-        res.on("data", (chunk) => (data += chunk));
-        res.on("end", () => resolve(data));
-      })
-      .on("error", () => resolve(PUBLIC_IP));
+    const req = https.get("https://api.ipify.org", { timeout: 2000 }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => (data += chunk));
+      res.on("end", () => resolve(data));
+    });
+    req.on("error", () => resolve(PUBLIC_IP));
+    req.on("timeout", () => {
+      req.destroy();
+      resolve(PUBLIC_IP);
+    });
   });
 }
 
