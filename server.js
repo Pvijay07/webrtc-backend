@@ -105,7 +105,11 @@ async function createWorker() {
     process.env.RAILWAY_TCP_PROXY_DOMAIN &&
     process.env.RAILWAY_TCP_PROXY_PORT
   ) {
-    const tcpPort = parseInt(process.env.WEBRTC_TCP_PORT || "40000", 10);
+    let tcpPort = parseInt(process.env.WEBRTC_TCP_PORT || "40001", 10);
+    const httpPort = parseInt(process.env.PORT || "3000", 10);
+    if (tcpPort === httpPort) {
+      tcpPort = httpPort + 1;
+    }
     try {
       webRtcServer = await worker.createWebRtcServer({
         listenInfos: [
