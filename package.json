@@ -1,23 +1,6 @@
-{
-  "name": "railway-webrtc-backend",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "dependencies": {
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "mediasoup": "^3.20.0",
-    "mediasoup-client": "^3.20.0",
-    "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
-  }
-}
+[2026-06-02T05:54:52.915970558Z] [info] Starting Container
+[2026-06-02T05:54:53.761596460Z] [info] === server.js starting ===
+[2026-06-02T05:54:53.761603207Z] [info] ◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+[2026-06-02T05:54:53.761609690Z] [info] WebRTC backend listening on port 40000
+[2026-06-02T05:54:53.761616121Z] [info] WebRtcServer started on TCP 40001, external: zephyr.proxy.rlwy.net:49928
+[2026-06-02T05:54:53.761622444Z] [info] Mediasoup router created
