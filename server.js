@@ -248,17 +248,18 @@ io.on("connection", async (socket) => {
   //   return;
   // }
 
-  let payload = {
+   let payload = {
     camera_id: "2",
-    rtsp_url:
-      "rtsp://admin:Infccpw1@tsvsc-183-82-119-59.run.pinggy-free.link:38711/cam/realmonitor?channel=2&subtype=0",
+   rtsp_url: "rtsp://rtspstream:3d31b084534720612660c49749@zephyr.rtsp.stream/pattern",
+
   };
+
   // tcp://jmfhi-183-82-119-59.run.pinggy-free.link:38711
   console.log(`Client authenticated for static camera ${payload.camera_id}`);
 
   let consumer;
   let transport;
-
+  
   // Wait for client to request router capabilities
   socket.on("getRouterCapabilities", (cb) => {
     cb(router.rtpCapabilities);
